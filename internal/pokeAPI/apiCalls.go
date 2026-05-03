@@ -6,12 +6,27 @@ import (
 	"fmt"
 	"net/http"
 	"io"
+	"pokedexcli/internal/pokecache"
+	"time"
 )
 var baseURL string = "https://pokeapi.co/api/v2/"
 var mapOffset int = 0
 var mapLimit int = 20
 
+var cache = pokecache.NewCache(5 * time.Second)
+
 func mapCaller(url string) ([]Results, error) {
+	if data, found := cache.Get(url); found {
+		var mapCallResults mapCall
+		err := json.Unmarshal(data, &mapCallResults)
+		if err != nil {
+			fmt.Println("Error unmarshaling cached data:", err)
+			return []Results{}, err
+		}
+		return mapCallResults.Results, nil
+	}
+
+
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println("Error fetching data:", err)
@@ -24,6 +39,8 @@ func mapCaller(url string) ([]Results, error) {
 		fmt.Println("Error reading response body:", err)
 		return []Results{}, err
 	}
+
+	cache.Add(url, body)
 
 	var mapCallResults mapCall
 	err = json.Unmarshal(body, &mapCallResults)
