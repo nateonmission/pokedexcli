@@ -52,7 +52,7 @@ func mapCaller(url string) ([]Results, error) {
 	return mapCallResults.Results, nil
 }
 
-func CommandMap() (error) {
+func CommandMap(args []string) (error) {
 	url := fmt.Sprintf("%slocation-area/?offset=%d&limit=%d", baseURL, mapOffset, mapLimit)
 
 	results, err := mapCaller(url)
@@ -67,7 +67,7 @@ func CommandMap() (error) {
 	return nil
 }
 
-func CommandMapb() (error) {
+func CommandMapb(args []string) (error) {
 	if mapOffset >= mapLimit * 2 {
 		mapOffset -= mapLimit * 2
 	} else if mapOffset - mapLimit >= 0 {
@@ -88,4 +88,87 @@ func CommandMapb() (error) {
 	mapOffset += mapLimit
 
 	return nil
+}
+
+func CommandExplore(args []string) (error) {
+	if len(args) < 1 {
+		return fmt.Errorf("usage: explore <location>")
+	}
+	location := args[0]
+	url := fmt.Sprintf("%slocation-area/%s/", baseURL, location)
+	var exploreCallResults exploreCall
+	if data, found := cache.Get(url); found {
+		
+		err := json.Unmarshal(data, &exploreCallResults)
+		if err != nil {
+			fmt.Println("Error unmarshaling cached data:", err)
+			return err
+		}
+	} else {
+
+		resp, err := http.Get(url)
+		if err != nil {
+			fmt.Println("Error fetching data:", err)
+			return err
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error reading response body:", err)
+			return err
+		}
+
+		cache.Add(url, body)
+
+		err = json.Unmarshal(body, &exploreCallResults)
+		if err != nil {
+			fmt.Println("Error unmarshaling JSON:", err)
+			return err
+		}
+
+	}
+	fmt.Printf("Exploring %s...\n", location)
+	fmt.Printf("Found Pokemon:\n")
+	for _, encounter := range exploreCallResults.PokemonEncounters {
+		fmt.Printf("- %s\n", encounter.Pokemon.Name)
+	}
+
+	return nil
+}
+
+func GetPokemonData(pokemonName string) (PokemonData, error) {
+	url := fmt.Sprintf("%spokemon/%s/", baseURL, pokemonName)
+	
+	var pokemonData PokemonData
+	if data, found := cache.Get(url); found {
+		err := json.Unmarshal(data, &pokemonData)
+		if err != nil {
+			fmt.Println("Error unmarshaling cached data:", err)
+			return PokemonData{}, err
+		}
+	} else {
+		resp, err := http.Get(url)
+		if err != nil {
+			fmt.Println("Error fetching data:", err)
+			return PokemonData{}, err
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error reading response body:", err)
+			return PokemonData{}, err
+		}
+
+		cache.Add(url, body)
+
+		err = json.Unmarshal(body, &pokemonData)
+		if err != nil {
+			fmt.Println("Error unmarshaling JSON:", err)
+			return PokemonData{}, err
+		}
+	}
+
+	return pokemonData, nil
 }

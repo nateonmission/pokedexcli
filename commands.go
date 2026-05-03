@@ -8,7 +8,7 @@ import (
 type cliCommand struct {
 	name	string
 	description	string
-	callback	func() error
+	callback	func(args []string) error
 }
 
 var commandMap = getCommand()
@@ -35,5 +35,27 @@ func getCommand() map[string]cliCommand {
 			description: "Show the previous 20 location areas",
 			callback: pokeAPI.CommandMapb,
 		},
+		"explore": {
+			name: "explore",
+			description: "Explore a location and see the Pokemon that can be encountered",
+			callback: pokeAPI.CommandExplore,
+		},
+		"catch": {
+			name: "catch",
+			description: "Attempt to catch a Pokemon by name",
+			callback: commandCatch,
+		},
+		"inventory": {
+			name: "inventory",
+			description: "Show the Pokemon in your inventory",
+			callback: commandInventory,
+		},
+		"inspect": {
+			name: "inspect",
+			description: "Show details about a Pokemon in your inventory",
+			callback: commandInspect,
+		},
+
+
 	}
 }

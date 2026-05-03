@@ -5,12 +5,16 @@ import (
 	"fmt"
 	"bufio"
 	"os"
+	"time"
+	"math/rand"
 )
 
 
 func main() {
 	
 	fmt.Printf("Welcome to the Pokedex!\n")
+	rand.Seed(time.Now().UnixNano())
+
 	scanner := bufio.NewScanner(os.Stdin)
 	loop := true
 	for loop {
@@ -23,7 +27,7 @@ func main() {
 		}
 		cmd := inputArr[0]
 		if command, ok := commandMap[cmd]; ok {
-			err := command.callback()
+			err := command.callback(inputArr[1:])
 			if err != nil {
 				fmt.Printf("Error executing command: %s\n", err)
 			}

@@ -1,3 +1,4 @@
+// /internal/pokecache/functions.go
 package pokecache
 import "time"
 
